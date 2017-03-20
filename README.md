@@ -13,6 +13,7 @@ The process we followed has three steps:
 * Selecting appropriate samples - as (lat,lon) tuples
 * Downloading satellite imagery from Google Maps Static API (API key needed)
 
+We plan to make the actual dataset available after further curation and nsuring that this complies with all applicable data licenses of the dataset used. In the meantime, we describe below the detailed procedure used to construct this dataset. 
 
 #### Obtaining shape files for ground truth labels
 First, manually download GIS polygon data for ground truth, available as shapefiles at http://www.eea.europa.eu/data-and-maps/data/urban-atlas.
@@ -22,17 +23,16 @@ The paper uses the shapefiles for
 * Athens
 * Barcelona
 * Berlin
-* Bucuresti
-* Bremen 
 * Madrid
-* Dublin
-* Eindhoven
-* London
 * Budapest 
 * Roma
 
+We have experimented with data for several other cities, however we decided to only include the above six cities in the analysis in the paper. 
+
 #### Selecting appropriate samples
 This step is outlined in ./dataset-collection/Urban Atlas - generate sampling locations for training.ipynb
+This step can be skipped and just the appropriate 
 
 #### Downloading satellite imagery
 This step is outlined in ./dataset-collection/Urban Atlas - extract images.ipynb
+

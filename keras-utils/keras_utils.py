@@ -60,7 +60,7 @@ def load_weights_into_model(model, weights_file, \
         
 
 def load_and_preprocess(filename, new_shape=None, channels="RGB", 
-    downsample=None):
+    downsample=None, crop=None):
     '''
     Load image and do basic preprocessing.
         - resize image to a specified shape;
@@ -72,6 +72,10 @@ def load_and_preprocess(filename, new_shape=None, channels="RGB",
         img = pyramid_reduce(img)
     if img.max()<=1.0:
         img = img * 255.0 / img.max()
+    if crop is not None:
+        i = np.random.randint(crop/2, img.shape[0]-crop/2)
+        j = np.random.randint(crop/2, img.shape[1]-crop/2)
+        img = img[(i-crop/2):(i+crop/2),(j-crop/2):(j+crop/2)]
     if new_shape is not None:
         img = resize(img, new_shape, preserve_range=True)
     # imagenet_mean_bgr = np.array([103.939, 116.779, 123.68])
@@ -113,7 +117,7 @@ def generator_from_df(df, image_generator=None, balance=None, \
                         class_column="class", filename_column="filename",
                         batch_size=32, seed=None, new_img_shape=None, \
                         class_dict=None, shuffle=True, channels="RGB",
-                        downsample=None):
+                        downsample=None, crop=None):
     idx = 0
     if class_dict is None:
         myclasses = df[class_column].unique()
@@ -139,7 +143,7 @@ def generator_from_df(df, image_generator=None, balance=None, \
         X = []
         for i,r in df_batch.iterrows():
             img = load_and_preprocess(r[filename_column], 
-                                      new_shape=new_img_shape,
+                                      new_shape=new_img_shape, crop=crop,
                                       channels=channels, downsample=downsample)
             X.append(img)
             y.append(class_dict[r[class_column]])
@@ -159,13 +163,14 @@ def generator_from_df(df, image_generator=None, balance=None, \
 def generator_from_file(filename, image_generator=None, balance=None, \
                         batch_size=32, seed=None, new_img_shape=None, \
                         class_dict=None, shuffle=True, channels="RGB",
-                        downsample=False):
+                        downsample=False, crop=None):
     df = pd.read_csv(filename)
     return generator_from_df(df, 
                              image_generator=image_generator, 
                              balance=balance,
                              batch_size=batch_size, 
                              seed=seed, 
+                             crop=crop,
                              new_img_shape=new_img_shape,
                              class_dict=class_dict, 
                              shuffle=shuffle,
