@@ -42,7 +42,7 @@ def load_weights_into_model(model, weights_file, \
         # transpose convolutional layers saved with a different backend   
         layer = model.get_layer(l_model)    
         k = [k for k,l in enumerate(model.layers) if l.name==l_model][0]
-        if layer.__class__.__name__ == 'Convolution2D' and transpose_conv:
+        if layer.__class__.__name__ in ['Conv2D', 'Convolution2D'] and transpose_conv:
             kernel, bias = weights
             if kernel.ndim > 2:
                 kernel = np.transpose(kernel, (2, 3, 1, 0))

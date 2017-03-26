@@ -3,12 +3,19 @@ from keras.layers.core import Lambda
 from keras.models import Model
 
 import tensorflow as tf
+import keras
+
+keras_version = keras.__version__
 
 def make_parallel(model, gpu_list=[]):
     def get_slice(data, idx, parts):
         shape = tf.shape(data)
         size = tf.concat(0, [ shape[:1] // parts, shape[1:] ])
         stride = tf.concat(0, [ shape[:1] // parts, shape[1:]*0 ])
+        # there's some API call change in TF>1.2
+        # https://github.com/kuza55/keras-extras/issues/8
+        # size = tf.concat([ shape[:1] // parts, shape[1:] ], 0)
+        # stride = tf.concat([ shape[:1] // parts, shape[1:]*0 ], 0)
         start = stride * idx
         return tf.slice(data, start, size)
 
