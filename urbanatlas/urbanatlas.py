@@ -22,6 +22,11 @@ from shapely.geometry import Point, Polygon
 import pysatml
 from pysatml.utils import gis_utils as gu
 from pysatml.utils import vector_utils as vu
+from pysatml import satimage as satimg
+
+N_SAMPLES_PER_CITY  = 25000
+N_SAMPLES_PER_CLASS = 1250
+MAX_SAMPLES_PER_POLY= 50
 
 class UAShapeFile():
 	'''
@@ -101,6 +106,9 @@ class UAShapeFile():
 			bbox = self._bounds
 		return construct_class_raster(self._gdf, bbox, class_col=self._class_col, grid_size=grid_size)
 
+	def generate_sampling_locations(self, n_samples_per_class=N_SAMPLES_PER_CLASS,thresh_area=0.25,max_samples=MAX_SAMPLES_PER_POLY):
+		gdf_sel = self._gdf[self._gdf.SHAPE_AREA>=thresh_area]
+		return generate_sampling_locations(gdf_sel, n_samples_per_class=n_samples_per_class, class_col=self._class_col, max_samples=max_samples)
 
 
 def load_shapefile(shapefile, class_col="ITEM"):
@@ -147,7 +155,7 @@ def construct_class_raster(gdf, bbox, class_col="ITEM", label2class=None, grid_s
 				continue
 			areas_per_class = gdf_frame.groupby(class_col)\
 								.apply(lambda x: x.intersection(cell_poly)\
-									   .apply(lambda y: y.area*(6400**2)).sum())
+									   .apply(lambda y:y.area*(6400**2)).sum())
 			classified_area = areas_per_class.sum()
 			if classified_area > 0:
 				areas_per_class = areas_per_class / float(classified_area) 
@@ -166,37 +174,91 @@ def construct_class_raster(gdf, bbox, class_col="ITEM", label2class=None, grid_s
 	return raster, locations, classes
 
 
-def fn_select_polygons(df, n_samples=1000, max_samples=None):    
-    samples_per_poly = (df.SHAPE_AREA/float(df.SHAPE_AREA.min()))\
-                            .astype(int)
-    # print df.ITEM.iloc[0]
-    if samples_per_poly.sum() > n_samples:
-        pvec = np.array([0.0, 0.2, 0.5, 0.7, 0.9, 0.95, 1])
-        bins = np.percentile(samples_per_poly, pvec*100)
-        cnts, _ = np.histogram(samples_per_poly, bins)
+def generate_sampling_locations(gdf_sel, n_samples_per_class=N_SAMPLES_PER_CLASS,class_col="ITEM", max_samples=MAX_SAMPLES_PER_POLY):
 
-        ret = []
-        x = samples_per_poly
-        for i in range(len(bins)-1):
-            if cnts[i] == 0:
-                continue
-            y = x[(x>=bins[i]) & (x<bins[i+1])] if i<len(bins)-2 \
-                    else x[(x>=bins[i]) & (x<=bins[i+1])]
-            # print i, (bins[i], bins[i+1]), cnts[i], pvec[i+1], len(x[(x>=bins[i]) & (x<=bins[i+1])])
-            y = y.sample(frac=pvec[i+1])
-            ret.append(y)
-        ret = pd.concat(ret)
-        ret_scaled = (ret.astype(float) / ret.sum() * n_samples)\
-                        .apply(np.ceil).astype(int)
-        ret_df = df.ix[ret_scaled.index]
-        ret_df['samples'] = ret_scaled.values
-    else:
-        ret_df = df
-        ret_df['samples'] = samples_per_poly.values
-    
-    # clamp # samples per polygon if specified
-    if max_samples is not None:
-        ret_df['samples'] = ret_df['samples'].apply(\
-                                    lambda x: min([x, max_samples]))
-    ret_df['samples'] = ret_df['samples'].astype(int)
-    return ret_df
+	# select polygons to sample
+	select_polygons = gdf_sel.groupby(class_col)\
+						.apply(lambda x: sample_polygons(x, 
+									n_samples=n_samples_per_class, 
+									max_samples=max_samples))
+	if class_col not in select_polygons.columns:
+		select_polygons.reset_index(inplace=True)
+	
+	# make sure all polygons are ok
+	# some polygons have their geometries messed up in the previous step??
+	select_polygons['geometry'] = select_polygons['geometry'].apply(lambda p: p.buffer(0) if not p.is_valid else p)
+	
+	# sample locations from each polygon
+	locations = select_polygons.groupby(class_col)\
+				.apply(lambda x: sample_locations_from_polygon(x,
+					sample_on_boundary = 'road' in x[class_col].iloc[0].lower() or 'railway' in x[class_col].iloc[0].lower()))
+	return locations
+
+
+def sample_polygons(df, n_samples=1000, max_samples=None):  
+	'''
+	A stratified sampling of polygons in the DataFrame gdf.
+	'''  
+	samples_per_poly = (df.SHAPE_AREA/float(df.SHAPE_AREA.min()))\
+							.astype(int)
+	# print df.ITEM.iloc[0]
+	if samples_per_poly.sum() > n_samples:
+		pvec = np.array([0.0, 0.2, 0.5, 0.7, 0.9, 0.95, 1])
+		bins = np.percentile(samples_per_poly, pvec*100)
+		cnts, _ = np.histogram(samples_per_poly, bins)
+
+		ret = []
+		x = samples_per_poly
+		for i in range(len(bins)-1):
+			if cnts[i] == 0:
+				continue
+			y = x[(x>=bins[i]) & (x<bins[i+1])] if i<len(bins)-2 \
+					else x[(x>=bins[i]) & (x<=bins[i+1])]
+			# print i, (bins[i], bins[i+1]), cnts[i], pvec[i+1], len(x[(x>=bins[i]) & (x<=bins[i+1])])
+			y = y.sample(frac=pvec[i+1])
+			ret.append(y)
+		ret = pd.concat(ret)
+		ret_scaled = (ret.astype(float) / ret.sum() * n_samples)\
+						.apply(np.ceil).astype(int)
+		ret_df = df.ix[ret_scaled.index]
+		ret_df['samples'] = ret_scaled.values
+	else:
+		ret_df = df
+		ret_df['samples'] = samples_per_poly.values
+	
+	# clamp # samples per polygon if specified
+	if max_samples is not None:
+		ret_df['samples'] = ret_df['samples'].apply(\
+									lambda x: min([x, max_samples]))
+	ret_df['samples'] = ret_df['samples'].astype(int)
+	return ret_df
+
+
+def sample_locations_from_polygon(df, sample_on_boundary=False):
+	'''
+	Given a list of polygons of the same type, generate locations for sampling images
+	'''
+	polygons = df['geometry']
+	nsamples = df['samples']
+	
+	if not sample_on_boundary:
+		centroids = np.array([(p.centroid.coords.xy[0][0], p.centroid.coords.xy[1][0]) \
+					  for p in polygons])    
+		idx = nsamples > 1
+		if idx.sum()>0:
+			polygons = polygons[idx]
+			nsamples = nsamples[idx]
+			locs = [satimg.generate_locations_within_polygon(p, nSamples=m-1, strict=True) \
+					for p,m in zip(polygons, nsamples)]
+			locs = np.vstack(locs).squeeze()
+			locs = np.vstack([locs, centroids])
+		else:
+			locs = centroids
+	else:
+		boundaries= [zip(p.exterior.coords.xy[0], p.exterior.coords.xy[1]) \
+					 for p in polygons]
+		locs = np.array([b[l] for b,m in zip(boundaries,nsamples) \
+						 for l in np.random.choice(np.arange(0,len(b)), min([len(b),m]))])
+	ret = pd.DataFrame(locs, columns=["lon", "lat"])
+	return ret
+
