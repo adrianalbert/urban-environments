@@ -19,7 +19,9 @@ import copy
 import geopandas as gpd
 from shapely.geometry import Point, Polygon
 
-import gis_utils as gu
+import pysatml
+from pysatml.utils import gis_utils as gu
+from pysatml.utils import vector_utils as vu
 
 class UAShapeFile():
 	'''
@@ -37,6 +39,9 @@ class UAShapeFile():
 
 		# read in shape file
 		self._gdf = load_shapefile(self._shapefile)
+		if self._gdf is None:
+			return 
+
 		self._classes = self._gdf[self._class_col].unique()
 		print "%d polygons | %d land use classes" % (len(self._gdf), len(self._classes))
 
@@ -48,11 +53,15 @@ class UAShapeFile():
 			print "Error: cannot find projection file %s" % self._prjfile
 			self._prj = ""
 
+		self.compute_bounds()
+
+
+	def compute_bounds(self):
 		# compute bounds for current shapefile for easier access later
-		lonmin, latmin, lonmax, latmax = get_bounds(self._gdf)
+		lonmin, latmin, lonmax, latmax = vu.compute_gdf_bounds(self._gdf)
 		self._bounds = (lonmin, latmin, lonmax, latmax)
-		xmin, ymin = gu.lonlat2xy((lonmin, latmin), prj=prj)
-		xmax, ymax = gu.lonlat2xy((lonmax, latmax), prj=prj)
+		xmin, ymin = gu.lonlat2xy((lonmin, latmin), prj=self._prj)
+		xmax, ymax = gu.lonlat2xy((lonmax, latmax), prj=self._prj)
 		self._bounds_meters = (xmin, ymin, xmax, ymax)
 
 
@@ -66,81 +75,128 @@ class UAShapeFile():
 		box_area =  (xmax-xmin) / 1.0e3 * (ymax-ymin) / 1.0e3
 		classified_area = self._gdf\
 							.groupby(self._class_col)\
-							.apply(lambda x: x[self._class_col].sum())
+							.apply(lambda x: x['SHAPE_AREA'].sum())
 		frac_classified = classified_area/box_area
 		return frac_classified
-		
+
+	def filter_by_polygon(self, poly):
+		return vu.filter_gdf_by_polygon(self._gdf, poly)
+
+	def crop_centered_window(self, center, window):
+		'''
+		Returns a UAShapeFile object obtained from original one by cropping a window of (W, H) (in kilometers) around a center (lon, lat).
+		'''
+		new_self = copy.deepcopy(self) 
+		new_self._gdf = vu.filter_gdf_by_centered_window(new_self._gdf, center, window)
+		new_self.compute_bounds()
+		return new_self
+
+	def extract_class_raster(self,center=None,window=None,grid_size=(100,100)):
+		if center is None:
+			lonmin, latmin, lonmax, latmax = self._bounds
+			center = ((latmin+latmax)/2.0, (lonmin+lonmax)/2.0)
+		if window is not None:
+			bbox = gu.bounding_box_at_location(center, window)
+		else:
+			bbox = self._bounds
+		return construct_class_raster(self._gdf, bbox, class_col=self._class_col, grid_size=grid_size)
+
+
 
 def load_shapefile(shapefile, class_col="ITEM"):
-    # read in shapefile
-    try:
-        gdf = gpd.GeoDataFrame.from_file(shapefile)
-    except:
-        print "--> %s: error reading file!"%shapefile
-        return None, None
+	# read in shapefile
+	try:
+		gdf = gpd.GeoDataFrame.from_file(shapefile)
+	except:
+		print "--> %s: error reading file!"%shapefile
+		return None
 
-    gdf.columns = [c.upper() if c != "geometry" else c for c in gdf.columns]
-    if 'SHAPE_AREA' not in gdf.columns:
-        gdf['SHAPE_AREA'] = gdf['geometry'].apply(lambda p: p.area)
-    if 'SHAPE_LEN' not in gdf.columns:
-        gdf['SHAPE_LEN'] = gdf['geometry'].apply(lambda p: p.length)
-        
-    # convert area & length to km
-    gdf['SHAPE_AREA'] = gdf['SHAPE_AREA'] / 1.0e6 # convert to km^2
-    gdf['SHAPE_LEN']  = gdf['SHAPE_LEN'] / 1.0e3 # convert to km
-    
-    # change coordinate system from northing/easting to lonlat
-    targetcrs = {u'ellps': u'WGS84', u'datum': u'WGS84', u'proj': u'longlat'}
-    gdf.to_crs(crs=targetcrs, inplace=True)
+	gdf.columns = [c.upper() if c != "geometry" else c for c in gdf.columns]
+	if 'SHAPE_AREA' not in gdf.columns:
+		gdf['SHAPE_AREA'] = gdf['geometry'].apply(lambda p: p.area)
+	if 'SHAPE_LEN' not in gdf.columns:
+		gdf['SHAPE_LEN'] = gdf['geometry'].apply(lambda p: p.length)
+		
+	# convert area & length to km
+	gdf['SHAPE_AREA'] = gdf['SHAPE_AREA'] / 1.0e6 # convert to km^2
+	gdf['SHAPE_LEN']  = gdf['SHAPE_LEN'] / 1.0e3 # convert to km
+	
+	# change coordinate system from northing/easting to lonlat
+	targetcrs = {u'ellps': u'WGS84', u'datum': u'WGS84', u'proj': u'longlat'}
+	gdf.to_crs(crs=targetcrs, inplace=True)
 
-    return gdf
-
-
-def get_city_center(shapefile):
-    geolocator = Nominatim()
-    country_code = shapefile.split("/")[-1].split("_")[0][:2]
-    city = " ".join(shapefile.split("/")[-1].split("_")[1:]).split(".")[0]
-    location = geolocator.geocode(city + "," + country_code)
-    if location is None:
-        return None, None
-    latlon = (location.latitude, location.longitude)
-    return latlon, country_code
+	return gdf
 
 
-def construct_class_raster(gdf, bbox, grid_size=(100,100)):
-    grid_size_lon, grid_size_lat = grid_size
-    latmin_grid, lonmin_grid, latmax_grid, lonmax_grid = bbox
-    latv = np.linspace(latmin_grid, latmax_grid, grid_size_lat+1)
-    lonv = np.linspace(lonmin_grid, lonmax_grid, grid_size_lon+1)
-    
-    raster = np.zeros((grid_size_lon, grid_size_lat, len(classes)))
-    locations = []
-    for i in range(len(lonv)-1):
-        clear_output(wait=True)
-        print "%d / %d"%(i, len(lonv)-1)
-        for j in range(len(latv)-1):
-            cell_poly = Polygon([(lonv[i],latv[j]), (lonv[i+1],latv[j]), \
-                                 (lonv[i+1],latv[j+1]), (lonv[i],latv[j+1])])
-            gdf_frame = filter_gdf_by_polygon(gdf, cell_poly)
-            if len(gdf_frame) == 0:
+def construct_class_raster(gdf, bbox, class_col="ITEM", label2class=None, grid_size=(100,100)):
+	grid_size_lon, grid_size_lat = grid_size
+	lonmin_grid, latmin_grid, lonmax_grid, latmax_grid = bbox
+	latv = np.linspace(latmin_grid, latmax_grid, grid_size_lat+1)
+	lonv = np.linspace(lonmin_grid, lonmax_grid, grid_size_lon+1)
+	classes = gdf[class_col].unique()
+	label2class = dict(zip(range(len(classes)), classes)) if label2class is None else label2class
+	
+	raster = np.zeros((grid_size_lon, grid_size_lat, len(classes)))
+	locations = []
+	for i in range(len(lonv)-1):
+		for j in range(len(latv)-1):
+			cell_poly = Polygon([(lonv[i],latv[j]), (lonv[i+1],latv[j]), \
+								 (lonv[i+1],latv[j+1]), (lonv[i],latv[j+1])])
+			gdf_frame = vu.filter_gdf_by_polygon(gdf, cell_poly)
+			if len(gdf_frame) == 0:
+				continue
+			areas_per_class = gdf_frame.groupby(class_col)\
+								.apply(lambda x: x.intersection(cell_poly)\
+									   .apply(lambda y: y.area*(6400**2)).sum())
+			classified_area = areas_per_class.sum()
+			if classified_area > 0:
+				areas_per_class = areas_per_class / float(classified_area) 
+				raster[i,j,:] = [areas_per_class[label2class[k]] if label2class[k] in areas_per_class else 0 for k in range(len(classes))]  
+				# also save sampling locations
+				# only if we can get ground truth label for the cell
+				cell_class = areas_per_class.argmax()
+				loc = (i, j, 
+					   cell_poly.centroid.xy[0][0], 
+					   cell_poly.centroid.xy[1][0], 
+					   cell_class)
+				locations.append(loc)
+	
+	locations = pd.DataFrame(locations, \
+					columns=["grid-i", "grid-j", "lon", "lat", "class"])
+	return raster, locations, classes
+
+
+def fn_select_polygons(df, n_samples=1000, max_samples=None):    
+    samples_per_poly = (df.SHAPE_AREA/float(df.SHAPE_AREA.min()))\
+                            .astype(int)
+    # print df.ITEM.iloc[0]
+    if samples_per_poly.sum() > n_samples:
+        pvec = np.array([0.0, 0.2, 0.5, 0.7, 0.9, 0.95, 1])
+        bins = np.percentile(samples_per_poly, pvec*100)
+        cnts, _ = np.histogram(samples_per_poly, bins)
+
+        ret = []
+        x = samples_per_poly
+        for i in range(len(bins)-1):
+            if cnts[i] == 0:
                 continue
-            areas_per_class = gdf_frame.groupby("ITEM")\
-                                .apply(lambda x: x.intersection(cell_poly)\
-                                       .apply(lambda y: y.area*(6400**2)).sum())
-            classified_area = areas_per_class.sum()
-            if classified_area > 0:
-                areas_per_class = areas_per_class / float(classified_area) 
-                raster[i,j,:] = [areas_per_class[label2class[k]] if label2class[k] in areas_per_class\
-                                 else 0 for k in range(len(classes))]  
-                # also save sampling locations
-                # only if we can get ground truth label for the cell
-                cell_class = areas_per_class.argmax()
-                loc = (i, j, 
-                       cell_poly.centroid.xy[0][0], 
-                       cell_poly.centroid.xy[1][0], 
-                       cell_class)
-                locations.append(loc)
+            y = x[(x>=bins[i]) & (x<bins[i+1])] if i<len(bins)-2 \
+                    else x[(x>=bins[i]) & (x<=bins[i+1])]
+            # print i, (bins[i], bins[i+1]), cnts[i], pvec[i+1], len(x[(x>=bins[i]) & (x<=bins[i+1])])
+            y = y.sample(frac=pvec[i+1])
+            ret.append(y)
+        ret = pd.concat(ret)
+        ret_scaled = (ret.astype(float) / ret.sum() * n_samples)\
+                        .apply(np.ceil).astype(int)
+        ret_df = df.ix[ret_scaled.index]
+        ret_df['samples'] = ret_scaled.values
+    else:
+        ret_df = df
+        ret_df['samples'] = samples_per_poly.values
     
-    locations = pd.DataFrame(locations, \
-                    columns=["grid-i", "grid-j", "lon", "lat", "class"])
-    return raster, locations
+    # clamp # samples per polygon if specified
+    if max_samples is not None:
+        ret_df['samples'] = ret_df['samples'].apply(\
+                                    lambda x: min([x, max_samples]))
+    ret_df['samples'] = ret_df['samples'].astype(int)
+    return ret_df
