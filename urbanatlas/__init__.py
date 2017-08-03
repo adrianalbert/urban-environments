@@ -1,1 +1,1 @@
-from urbanatlas import UAShapeFile
+# from urbanatlas import UAShapeFile
