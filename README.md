@@ -52,18 +52,18 @@ To process the vector data (shapefiles), we have developed the `UAShapeFile` cla
 
 #### Creating ground truth validation raster grids
 
-First, let's crop a window of width WxW centered at the city center
+First, let's crop a window of width $W \times W$ (in km) centered at the city center:
 
+```Python
+>>>W = 25 # in Km
+>>>window = (W, W)
+>>>mycity_crop = mycity.crop_centered_window(city_center, window)
+```
+                    
+The `UAShapeFile` class allows to compute a ground raster of a given grid size:
 ```Python
 grid_cell = 100
 grid_size = (grid_cell, grid_cell)
-W = 25 # in Km
-window = (W, W)
-mycity_crop = mycity.crop_centered_window(city_center, window)
-```
-                    
-Compute ground traster for given window size:
-```Python
 raster, locations_grid, cur_classes = mycity_crop.extract_class_raster(grid_size=grid_size)
 ```
     
@@ -71,12 +71,17 @@ This step can be skipped in the case of the six cities above, for which the data
 
 #### Selecting appropriate samples
 
-        # extract sampling locations
-        locations_train = mycity.generate_sampling_locations(thresh_area=thresh_area, \
-                                                             n_samples_per_class=N_SAMPLES_PER_CLASS,\
-                                                             max_samples=MAX_SAMPLES_PER_POLY)
+Now, let's generate locations to download imagery for from the shapefile, using a stratified sampling procedure that takes into account the imbalances in the classes.
 
-This step can be skipped and just the appropriate 
+```Python
+>>>N_SAMPLES_PER_CLASS = 1250
+>>>MAX_SAMPLES_PER_POLY = 50
+>>>locations_train = mycity.generate_sampling_locations(thresh_area=thresh_area, \
+                                                     n_samples_per_class=N_SAMPLES_PER_CLASS,\
+                                                     max_samples=MAX_SAMPLES_PER_POLY)
+```
+
+This step can be skipped in the case of the six cities above, for which the data (files ```additional_sample_locations.csv```) can be found in this repository under [processed-data](./processed-data).
 
 #### Downloading satellite imagery
 This step is outlined in ./dataset-collection/Urban Atlas - extract images.ipynb
