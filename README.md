@@ -55,16 +55,16 @@ To process the vector data (shapefiles), we have developed the `UAShapeFile` cla
 First, let's crop a window of width $W \times W$ (in km) centered at the city center:
 
 ```Python
->>>W = 25 # in Km
->>>window = (W, W)
->>>mycity_crop = mycity.crop_centered_window(city_center, window)
+>>> W = 25 # in Km
+>>> window = (W, W)
+>>> mycity_crop = mycity.crop_centered_window(city_center, window)
 ```
                     
 The `UAShapeFile` class allows to compute a ground raster of a given grid size:
 ```Python
-grid_cell = 100
-grid_size = (grid_cell, grid_cell)
-raster, locations_grid, cur_classes = mycity_crop.extract_class_raster(grid_size=grid_size)
+>>> grid_cell = 100
+>>> grid_size = (grid_cell, grid_cell)
+>>> raster, locations_grid, cur_classes = mycity_crop.extract_class_raster(grid_size=grid_size)
 ```
     
 This step can be skipped in the case of the six cities above, for which the data (files ```sample_locations_raster.csv``` and ```ground_truth_class_raster.npz```) can be found in this repository under [processed-data](./processed-data).
@@ -74,9 +74,9 @@ This step can be skipped in the case of the six cities above, for which the data
 Now, let's generate locations to download imagery for from the shapefile, using a stratified sampling procedure that takes into account the imbalances in the classes.
 
 ```Python
->>>N_SAMPLES_PER_CLASS = 1250
->>>MAX_SAMPLES_PER_POLY = 50
->>>locations_train = mycity.generate_sampling_locations(thresh_area=thresh_area, \
+>>> N_SAMPLES_PER_CLASS = 1250
+>>> MAX_SAMPLES_PER_POLY = 50
+>>> locations_train = mycity.generate_sampling_locations(thresh_area=thresh_area, \
                                                      n_samples_per_class=N_SAMPLES_PER_CLASS,\
                                                      max_samples=MAX_SAMPLES_PER_POLY)
 ```
