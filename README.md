@@ -65,9 +65,6 @@ mycity_crop = mycity.crop_centered_window(city_center, window)
 Compute ground traster for given window size:
 ```Python
 raster, locations_grid, cur_classes = mycity_crop.extract_class_raster(grid_size=grid_size)
-myraster = np.zeros(grid_size + (len(classes),))
-idx = [class2label[c] for k,c in enumerate(cur_classes)]
-myraster[:,:,idx] = raster
 ```
     
 This step can be skipped in the case of the six cities above, for which the data (files ```sample_locations_raster.csv``` and ```ground_truth_class_raster.npz```) can be found in this repository under [processed-data](./processed-data).
