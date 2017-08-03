@@ -29,7 +29,7 @@ To construct training and validation datasets, we combine ground-truth labels fr
 We plan to make the actual dataset available after further curation and ensuring that this complies with all applicable data licenses of the dataset used. In the meantime, we describe below the detailed procedure used to construct this dataset. 
 
 #### Obtaining shape files for ground truth labels
-First, manually download GIS polygon data for ground truth, available as shapefiles at [the Urban Atlas website](http://www.eea.europa.eu/data-and-maps/data/urban-atlas). Unfortunately there is no way to automate this because of the confirmation web forms used on the Urban Atlas website. The vector data integration and sampling peline is detailed in a [notebook](./dataset-collection/Urban&nbspAtlas-process&nbspshapefiles&nbspto&nbspcompute&nbspstats&nbspand&nbspextract&nbspsampling&nbsplocations.ipynb).
+First, manually download GIS polygon data for ground truth, available as shapefiles at [the Urban Atlas website](http://www.eea.europa.eu/data-and-maps/data/urban-atlas). Unfortunately there is no way to automate this because of the confirmation web forms used on the Urban Atlas website. The vector data integration and sampling pipeline is detailed in a [notebook](./dataset-collection/Urban&nbspAtlas-process&nbspshapefiles&nbspto&nbspcompute&nbspstats&nbspand&nbspextract&nbspsampling&nbsplocations.ipynb).
 
 You can save these shapefiles (along with their respective projection files) to `/home/data/urban-atlas/shapefiles/`, or to a folder of your choosing, and manually edit the paths in the [notebook](./dataset-collection/Urban&nbspAtlas-process&nbspshapefiles&nbspto&nbspcompute&nbspstats&nbspand&nbspextract&nbspsampling&nbsplocations.ipynb).
 
@@ -50,10 +50,42 @@ To process the vector data (shapefiles), we have developed the `UAShapeFile` cla
 >>> mycity = UAShapeFile(myshapefile)
 ```
 
+#### Creating ground truth validation raster grids
+
+First, let's crop a window of width $W \times W$ (in km) centered at the city center:
+
+```Python
+>>> W = 25 # in Km
+>>> window = (W, W)
+>>> mycity_crop = mycity.crop_centered_window(city_center, window)
+```
+                    
+The `UAShapeFile` class allows to compute a ground raster of a given grid size:
+```Python
+>>> grid_cell = 100
+>>> grid_size = (grid_cell, grid_cell)
+>>> raster, locations_grid, cur_classes = mycity_crop.extract_class_raster(grid_size=grid_size)
+```
+    
+This step can be skipped in the case of the six cities above, for which the data (files ```sample_locations_raster.csv``` and ```ground_truth_class_raster.npz```) can be found in this repository under [processed-data](./processed-data).
+
 #### Selecting appropriate samples
 
-This step can be skipped and just the appropriate 
+Now, let's generate locations to download imagery for from the shapefile, using a stratified sampling procedure that takes into account the imbalances in the classes.
+
+```Python
+>>> N_SAMPLES_PER_CLASS = 1250
+>>> MAX_SAMPLES_PER_POLY = 50
+>>> locations_train = mycity.generate_sampling_locations(thresh_area=thresh_area, \
+                                                     n_samples_per_class=N_SAMPLES_PER_CLASS,\
+                                                     max_samples=MAX_SAMPLES_PER_POLY)
+```
+
+This step can be skipped in the case of the six cities above, for which the data (files ```additional_sample_locations.csv```) can be found in this repository under [processed-data](./processed-data).
 
 #### Downloading satellite imagery
-This step is outlined in ./dataset-collection/Urban Atlas - extract images.ipynb
 
+With a list of locations to sample (and their respective classes), we can now acquire imagery at each of the locations. There are a number of different ways to go about it, depending, of course, on the type and characteristics of the imagery needed. For visual-spectrum imagery, perhaps the easiest-to-use online source is Google Maps. For this, there are two steps to follow:
+
+1. Create a Google Maps [Static API key](https://developers.google.com/maps/documentation/javascript/get-api-key))
+2. Edit and run this [Jupyter notebook](./dataset-collection/Urban%20Atlas%20-%20extract%20images.ipynb) in the [dataset-collection](./dataset-collection) folder.
