@@ -55,6 +55,9 @@ To process the vector data (shapefiles), we have developed the `UAShapeFile` cla
 First, let's crop a window of width WxW centered at the city center
 
 ```Python
+grid_cell = 100
+grid_size = (grid_cell, grid_cell)
+W = 25 # in Km
 window = (W, W)
 mycity_crop = mycity.crop_centered_window(city_center, window)
 ```
