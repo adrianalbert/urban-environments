@@ -1,0 +1,22 @@
+Agricultural + Semi-natural areas + Wetlands,0.280976858811
+Airports,0.00242848115509
+Construction sites,0.00252098666284
+Continuous Urban Fabric (S.L. > 80%),0.00819396412851
+Discontinuous Dense Urban Fabric (S.L. : 50% -  80%),0.0187263613628
+Discontinuous Low Density Urban Fabric (S.L. : 10% - 30%),0.0173336948276
+Discontinuous Medium Density Urban Fabric (S.L. : 30% - 50%),0.0160671912696
+Discontinuous Very Low Density Urban Fabric (S.L. < 10%),0.00863297212269
+Fast transit roads and associated land,0.00231269434184
+Forests,0.0789643636843
+Green urban areas,0.00578694058026
+"Industrial, commercial, public, military and private units",0.0232615113902
+Isolated Structures,0.00369483301633
+Land without current use,0.00169879630806
+Mineral extraction and dump sites,0.00299006047311
+Other roads and associated land,0.0154651809535
+Port areas,1.2968693313e-06
+Railways and associated land,0.00146482672966
+Sports and leisure facilities,0.00502549211181
+Water bodies,0.00209924730616
+pct land classified,0.497645754105
+spatial extent,85.101955441
