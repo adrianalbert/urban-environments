@@ -52,7 +52,7 @@ To process the vector data (shapefiles), we have developed the `UAShapeFile` cla
 
 #### Creating ground truth validation raster grids
 
-First, let's crop a window of width $W \times W$ (in km) centered at the city center:
+First, let's crop a window of width W x W (in km) centered at the city center:
 
 ```Python
 >>> W = 25 # in Km
