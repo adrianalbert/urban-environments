@@ -33,7 +33,7 @@ class UAShapeFile():
 	Class that encapsulates functionality for analyzing GIS vector data from the Urban Atlas dataset, published as shapefiles. The Urban Atlas is a land use dataset of 300 cities in Europe. 
 	'''
 
-	def __init__(self, shapefile, prjfile=None, class_col='ITEM', **kwargs):
+	def __init__(self, shapefile, prjfile=None, class_col='ITEM', consolidate_classes=False, **kwargs):
 		'''
 		Initialize a GeoPandas GeoDataFrame with settings specific to the published Urban Atlas shape files.
 		'''
@@ -46,6 +46,8 @@ class UAShapeFile():
 		self._gdf = load_shapefile(self._shapefile)
 		if self._gdf is None:
 			return 
+		if consolidate_classes:
+			self._gdf = consolidate_UA_classes(self._gdf, self._class_col)
 
 		self._classes = self._gdf[self._class_col].unique()
 		print "%d polygons | %d land use classes" % (len(self._gdf), len(self._classes))
@@ -111,6 +113,33 @@ class UAShapeFile():
 		return generate_sampling_locations(gdf_sel, n_samples_per_class=n_samples_per_class, class_col=self._class_col, max_samples=max_samples)
 
 
+def consolidate_UA_classes(gdf, class_col='ITEM'):
+	consolidate_classes = {
+	    "Continuous Urban Fabric (S.L. > 80%)":"High Density Urban Fabric",
+	     "Discontinuous Dense Urban Fabric (S.L. : 50% -  80%)":"High Density Urban Fabric",
+	     "Discontinuous Medium Density Urban Fabric (S.L. : 30% - 50%)":"Medium Density Urban Fabric",
+	     "Discontinuous Low Density Urban Fabric (S.L. : 10% - 30%)":"Low Density Urban Fabric",
+	     "Discontinuous Very Low Density Urban Fabric (S.L. < 10%)":"Low Density Urban Fabric"
+	}
+	gdf[class_col] = gdf[class_col].apply(
+	    lambda x: consolidate_classes[x] if x in consolidate_classes else x)
+
+	include_classes = ["Green urban areas", 
+	                   "Airports",
+	                   "Forests",
+	                   "Agricultural + Semi-natural areas + Wetlands",
+	                   # "Railways and associated land",
+	                   "High Density Urban Fabric", 
+	                    #"Mineral extraction and dump sites",
+	                   "Medium Density Urban Fabric", 
+	                   "Low Density Urban Fabric",
+	                   "Water bodies",
+	                   "Sports and leisure facilities",
+	                   "Industrial, commercial, public, military and private units"]
+	gdf = gdf[gdf[class_col].isin(include_classes)]
+	return gdf
+
+
 def load_shapefile(shapefile, class_col="ITEM"):
 	# read in shapefile
 	try:
@@ -134,6 +163,8 @@ def load_shapefile(shapefile, class_col="ITEM"):
 	gdf.to_crs(crs=targetcrs, inplace=True)
 
 	return gdf
+
+
 
 
 def construct_class_raster(gdf, bbox, class_col="ITEM", label2class=None, grid_size=(100,100)):
