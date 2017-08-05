@@ -12,9 +12,8 @@ This repository contains the `Python` implementation of the data processing, mod
 
 ### A quantitative comparison of city blocks based on computer vision
 
-<img src="./imgs/quantifying_urban_environs_schematic.png" width="85%">
+<img src="./imgs/quantifying_urban_environs_schematic.png" width="45%">
 <img src="./imgs/tsne_cities.png" width="85%">
-<img src="./imgs/transfer_learning.png" width="85%">
 
 ### Citation
 If you use the code, data, or analysis results in this paper, we kindly ask that you cite the paper above as:
