@@ -34,6 +34,7 @@ To process the vector data (shapefiles), we have developed the `UAShapeFile` cla
 >>> myshapefile = "ro001l_bucharest.shp"
 >>> mycity = UAShapeFile(myshapefile)
 ```
+<img src="./imgs/polygon_example_urbanatlas.png" width="85%">
 
 #### Creating ground truth validation raster grids
 
@@ -68,9 +69,15 @@ Now, let's generate locations to download imagery for from the shapefile, using 
 
 This step can be skipped in the case of the six cities above, for which the data (files ```additional_sample_locations.csv```) can be found in this repository under [processed-data](./processed-data).
 
+<img src="./imgs/polygon_example_urbanatlas.png" width="85%">
+
 #### Downloading satellite imagery
 
 With a list of locations to sample (and their respective classes), we can now acquire imagery at each of the locations. There are a number of different ways to go about it, depending, of course, on the type and characteristics of the imagery needed. For visual-spectrum imagery, perhaps the easiest-to-use online source is Google Maps. For this, there are two steps to follow:
 
 1. Create a Google Maps [Static API key](https://developers.google.com/maps/documentation/javascript/get-api-key)
 2. Edit and run this [Jupyter notebook](./dataset-collection/Urban%20Atlas%20-%20extract%20images.ipynb) in the [dataset-collection](./dataset-collection) folder.
+
+<img src="./imgs/example_googlemaps_images.png" width="85%">
+
+
