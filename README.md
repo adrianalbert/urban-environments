@@ -10,9 +10,8 @@ This repository contains the `Python` implementation of the data processing, mod
 * `Keras` implementations of the convolutional neural networks classifiers used for this paper are in the [classifier](./classifier) folder, along with `Keras` utilities for data ingestion and multi-GPU training (with a `TensorFlow` backend)
 * code to train and validate the models, and to produce the analysis and figures in the paper is in the notebooks in the [land-use-classification](./land-use-classification) folder.
 
-### A quantitative comparison of city blocks based on computer vision
+After a convolutional network classifier is trained on satellite data in a supervised way, it can be used to compare city blocks (_urban environments_) across many cities by studying the features extracted for each satellite image. 
 
-<img src="./imgs/quantifying_urban_environs_schematic.png" width="45%">
 <img src="./imgs/tsne_cities.png" width="85%">
 
 ### Citation
