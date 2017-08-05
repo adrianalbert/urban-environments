@@ -29,7 +29,7 @@ The paper uses the shapefiles for several cities, some of which are expected to 
 * Roma 
 
 #### Ingesting and processing _Urban Atlas_ shapefiles
-To process the vector data (shapefiles), we have developed the `UAShapeFile` class that encapsulates much of the functionality needed for shapefile data ingestion, sampling, etc. See the code in the [urbanatlas](./urbanatlas) folder. This is a lighweight wrapper around a ```GeoDataFrame``` object from the ```geopandas``` Python module. A sample usage is as follows:
+To process the vector data (shapefiles), we have developed the `UAShapeFile` class that encapsulates much of the functionality needed for shapefile data ingestion, sampling, etc. See the code in the [urbanatlas.py](./dataset-collection/urbanatlas.py). This is a lighweight wrapper around a ```GeoDataFrame``` object from the ```geopandas``` Python module. A sample usage is as follows:
 
 ```Python
 >>> from urbanatlas import UAShapeFile
@@ -85,7 +85,7 @@ An example of polygon data and sampling locations is given in the below figure.
 With a list of locations to sample (and their respective classes), we can now acquire imagery at each of the locations. There are a number of different ways to go about it, depending, of course, on the type and characteristics of the imagery needed. For visual-spectrum imagery, perhaps the easiest-to-use online source is Google Maps. For this, there are two steps to follow:
 
 1. Create a Google Maps [Static API key](https://developers.google.com/maps/documentation/javascript/get-api-key)
-2. Edit and run this [Jupyter notebook](./dataset-collection/Urban%20Atlas%20-%20extract%20images.ipynb) in the [dataset-collection](./dataset-collection) folder.
+2. Edit the second section in the _Urban Environments_ pipeline [notebook](./dataset-collection/Pipeline-to-create-Urban-Environments-dataset.ipynb).
 
 Example satellite images across the 20 original classes in the _Urban Atlas_ survey is given in the figure below.
 
