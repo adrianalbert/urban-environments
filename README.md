@@ -2,7 +2,7 @@
 
 This repository contains code related to the paper [Using convolutional networks and satellite imagery to identify patterns in urban environments at a large scale](https://arxiv.org/abs/1704.02965). A slightly modified version of the paper appears in the [proceedings](http://www.kdd.org/kdd2017/papers/view/using-convolutional-networks-and-satellite-imagery-to-identify-patterns-in-) of the [ACM KDD 2017](http://www.kdd.org/kdd2017/) conference.
 
-![land-use-maps](./imgs/land_use_maps.png)
+![land-use-maps](./imgs/land_use_maps.png|width=80)
 
 If you use the code, data, or analysis results in this paper, we kindly ask that you cite the paper above as:
 
