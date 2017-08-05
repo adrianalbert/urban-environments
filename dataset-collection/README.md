@@ -34,7 +34,12 @@ To process the vector data (shapefiles), we have developed the `UAShapeFile` cla
 >>> myshapefile = "ro001l_bucharest.shp"
 >>> mycity = UAShapeFile(myshapefile)
 ```
+
+Let's look at the amount of land classified by each land use class across three example cities.
+
 <img src="../imgs/stats_3_cities.png" width="65%">
+
+As expected, there is a large disparity in the classes, with a lot more land (by surface) classified as agricultural or forests as opposed to, e.g., airports. In the figure, we show the land use classes we analyze in the [paper](https://arxiv.org/abs/1704.02965).
 
 #### Creating ground truth validation raster grids
 
@@ -69,6 +74,8 @@ Now, let's generate locations to download imagery for from the shapefile, using 
 
 This step can be skipped in the case of the six cities above, for which the data (files ```additional_sample_locations.csv```) can be found in this repository under [processed-data](./processed-data).
 
+An example of polygon data and sampling locations is given in the below figure. 
+
 <img src="../imgs/polygon_example_urbanatlas.png" width="65%">
 
 #### Downloading satellite imagery
@@ -77,6 +84,8 @@ With a list of locations to sample (and their respective classes), we can now ac
 
 1. Create a Google Maps [Static API key](https://developers.google.com/maps/documentation/javascript/get-api-key)
 2. Edit and run this [Jupyter notebook](./dataset-collection/Urban%20Atlas%20-%20extract%20images.ipynb) in the [dataset-collection](./dataset-collection) folder.
+
+Example satellite images across the 20 original classes in the _Urban Atlas_ survey is given in the figure below.
 
 <img src="../imgs/example_googlemaps_images.png" width="85%">
 
