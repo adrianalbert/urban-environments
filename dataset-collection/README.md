@@ -13,7 +13,7 @@ To construct training and validation datasets, we combine ground-truth labels fr
 
 We plan to make the actual dataset available after further curation and ensuring that this complies with all applicable data licenses of the dataset used. In the meantime, we describe below the detailed procedure used to construct this dataset. 
 
-The entire pipeline is implemented and documented in this [notebook](./dataset-collection/Pipeline-to-create-Urban-Environments-dataset.ipynb).
+The entire pipeline is implemented and documented in this [notebook](./Pipeline-to-create-Urban-Environments-dataset.ipynb).
 
 #### Obtaining shape files for ground truth labels
 First, manually download GIS polygon data for ground truth, available as shapefiles at [the Urban Atlas website](http://www.eea.europa.eu/data-and-maps/data/urban-atlas). Unfortunately there is no way to automate this because of the confirmation web forms used on the Urban Atlas website. 
@@ -29,7 +29,7 @@ The paper uses the shapefiles for several cities, some of which are expected to 
 * Roma 
 
 #### Ingesting and processing _Urban Atlas_ shapefiles
-To process the vector data (shapefiles), we have developed the `UAShapeFile` class that encapsulates much of the functionality needed for shapefile data ingestion, sampling, etc. See the code in the [urbanatlas.py](./dataset-collection/urbanatlas.py). This is a lighweight wrapper around a ```GeoDataFrame``` object from the ```geopandas``` Python module. A sample usage is as follows:
+To process the vector data (shapefiles), we have developed the `UAShapeFile` class that encapsulates much of the functionality needed for shapefile data ingestion, sampling, etc. See the code in the [urbanatlas.py](urbanatlas.py). This is a lighweight wrapper around a ```GeoDataFrame``` object from the ```geopandas``` Python module. A sample usage is as follows:
 
 ```Python
 >>> from urbanatlas import UAShapeFile
@@ -60,7 +60,7 @@ The `UAShapeFile` class allows to compute a ground raster of a given grid size:
 >>> raster, locations_grid, cur_classes = mycity_crop.extract_class_raster(grid_size=grid_size)
 ```
     
-This step can be skipped in the case of the six cities above, for which the data (files ```sample_locations_raster.csv``` and ```ground_truth_class_raster.npz```) can be found in this repository under [processed-data](./processed-data).
+This step can be skipped in the case of the six cities above, for which the data (files ```sample_locations_raster.csv``` and ```ground_truth_class_raster.npz```) can be found in this repository under [processed-data](../processed-data).
 
 #### Selecting appropriate samples
 
@@ -74,7 +74,7 @@ Now, let's generate locations to download imagery for from the shapefile, using 
                                                      max_samples=MAX_SAMPLES_PER_POLY)
 ```
 
-This step can be skipped in the case of the six cities above, for which the data (files ```additional_sample_locations.csv```) can be found in this repository under [processed-data](./processed-data).
+This step can be skipped in the case of the six cities above, for which the data (files ```additional_sample_locations.csv```) can be found in this repository under [processed-data](../processed-data).
 
 An example of polygon data and sampling locations is given in the below figure. 
 
