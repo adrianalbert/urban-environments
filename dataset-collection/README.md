@@ -34,7 +34,7 @@ To process the vector data (shapefiles), we have developed the `UAShapeFile` cla
 >>> myshapefile = "ro001l_bucharest.shp"
 >>> mycity = UAShapeFile(myshapefile)
 ```
-<img src="../imgs/polygon_example_urbanatlas.png" width="85%">
+<img src="../imgs/stats_3_cities.png" width="65%">
 
 #### Creating ground truth validation raster grids
 
@@ -69,7 +69,7 @@ Now, let's generate locations to download imagery for from the shapefile, using 
 
 This step can be skipped in the case of the six cities above, for which the data (files ```additional_sample_locations.csv```) can be found in this repository under [processed-data](./processed-data).
 
-<img src="../imgs/polygon_example_urbanatlas.png" width="85%">
+<img src="../imgs/polygon_example_urbanatlas.png" width="65%">
 
 #### Downloading satellite imagery
 
