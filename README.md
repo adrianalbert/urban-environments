@@ -9,6 +9,5 @@ If you use the code, data, or analysis results in this paper, we kindly ask that
 This repository contains the `Python` implementation of the data processing, model training, and analysis presented in the paper:
 
 * code to construct training and evaluation datasets for land use classification of urban environments is in the [dataset-collection](./dataset-collection) folder
-* Keras implementations of the convolutional neural networks classifiers used for this paper are in [keras-models](./keras-models)
-* utilities for data ingestion and multi-GPU training in Keras (with a TensorFlow backend) are in [keras-utils](./keras-utils)
+* `Keras` implementations of the convolutional neural networks classifiers used for this paper are in [classifier](./classifier), along with `Keras` utilities for data ingestion and multi-GPU training (with a `TensorFlow` backend)
 * code to train and validate the models, and to produce the analysis and figures in the paper is in the notebooks in the [land-use-classification](./land-use-classification) folder.
