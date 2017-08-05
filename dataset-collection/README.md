@@ -13,10 +13,12 @@ To construct training and validation datasets, we combine ground-truth labels fr
 
 We plan to make the actual dataset available after further curation and ensuring that this complies with all applicable data licenses of the dataset used. In the meantime, we describe below the detailed procedure used to construct this dataset. 
 
-#### Obtaining shape files for ground truth labels
-First, manually download GIS polygon data for ground truth, available as shapefiles at [the Urban Atlas website](http://www.eea.europa.eu/data-and-maps/data/urban-atlas). Unfortunately there is no way to automate this because of the confirmation web forms used on the Urban Atlas website. The vector data integration and sampling pipeline is detailed in a [notebook](./dataset-collection/Urban&nbspAtlas-process&nbspshapefiles&nbspto&nbspcompute&nbspstats&nbspand&nbspextract&nbspsampling&nbsplocations.ipynb).
+The entire pipeline is implemented and documented in this [notebook](./dataset-collection/Pipeline-to-create-Urban-Environments-dataset.ipynb).
 
-You can save these shapefiles (along with their respective projection files) to `/home/data/urban-atlas/shapefiles/`, or to a folder of your choosing, and manually edit the paths in the [notebook](./dataset-collection/Urban&nbspAtlas-process&nbspshapefiles&nbspto&nbspcompute&nbspstats&nbspand&nbspextract&nbspsampling&nbsplocations.ipynb).
+#### Obtaining shape files for ground truth labels
+First, manually download GIS polygon data for ground truth, available as shapefiles at [the Urban Atlas website](http://www.eea.europa.eu/data-and-maps/data/urban-atlas). Unfortunately there is no way to automate this because of the confirmation web forms used on the Urban Atlas website. 
+
+You can save these shapefiles (along with their respective projection files) to `/home/data/urban-atlas/shapefiles/`, or to a folder of your choosing, and manually edit the paths in the notebook.
 
 The paper uses the shapefiles for several cities, some of which are expected to be more "similar" to each other than others. We have experimented with data for several other cities, however we decided to only include the following six cities in the analysis in the paper:
 * Athens
@@ -27,13 +29,19 @@ The paper uses the shapefiles for several cities, some of which are expected to 
 * Roma 
 
 #### Ingesting and processing _Urban Atlas_ shapefiles
-To process the vector data (shapefiles), we have developed the `UAShapeFile` class that encapsulates much of the functionality needed for shapefile data ingestion, sampling, etc. See the code in the [urbanatlas](./urbanatlas) folder. This is a lighweight wrapper around a ```GeoDataFrame``` object from the ```geopandas``` Python module. A sample usage is as follows:
+To process the vector data (shapefiles), we have developed the `UAShapeFile` class that encapsulates much of the functionality needed for shapefile data ingestion, sampling, etc. See the code in the [urbanatlas.py](./dataset-collection/urbanatlas.py). This is a lighweight wrapper around a ```GeoDataFrame``` object from the ```geopandas``` Python module. A sample usage is as follows:
 
 ```Python
 >>> from urbanatlas import UAShapeFile
 >>> myshapefile = "ro001l_bucharest.shp"
 >>> mycity = UAShapeFile(myshapefile)
 ```
+
+Let's look at the amount of land classified by each land use class across three example cities.
+
+<img src="../imgs/stats_3_cities.png" width="65%">
+
+As expected, there is a large disparity in the classes, with a lot more land (by surface) classified as agricultural or forests as opposed to, e.g., airports. In the figure, we show the land use classes we analyze in the [paper](https://arxiv.org/abs/1704.02965).
 
 #### Creating ground truth validation raster grids
 
@@ -68,9 +76,19 @@ Now, let's generate locations to download imagery for from the shapefile, using 
 
 This step can be skipped in the case of the six cities above, for which the data (files ```additional_sample_locations.csv```) can be found in this repository under [processed-data](./processed-data).
 
+An example of polygon data and sampling locations is given in the below figure. 
+
+<img src="../imgs/polygon_example_urbanatlas.png" width="65%">
+
 #### Downloading satellite imagery
 
 With a list of locations to sample (and their respective classes), we can now acquire imagery at each of the locations. There are a number of different ways to go about it, depending, of course, on the type and characteristics of the imagery needed. For visual-spectrum imagery, perhaps the easiest-to-use online source is Google Maps. For this, there are two steps to follow:
 
 1. Create a Google Maps [Static API key](https://developers.google.com/maps/documentation/javascript/get-api-key)
-2. Edit and run this [Jupyter notebook](./dataset-collection/Urban%20Atlas%20-%20extract%20images.ipynb) in the [dataset-collection](./dataset-collection) folder.
+2. Edit the second section in the _Urban Environments_ pipeline [notebook](./dataset-collection/Pipeline-to-create-Urban-Environments-dataset.ipynb).
+
+Example satellite images across the 20 original classes in the _Urban Atlas_ survey is given in the figure below.
+
+<img src="../imgs/example_googlemaps_images.png" width="85%">
+
+
