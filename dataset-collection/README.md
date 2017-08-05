@@ -13,10 +13,12 @@ To construct training and validation datasets, we combine ground-truth labels fr
 
 We plan to make the actual dataset available after further curation and ensuring that this complies with all applicable data licenses of the dataset used. In the meantime, we describe below the detailed procedure used to construct this dataset. 
 
-#### Obtaining shape files for ground truth labels
-First, manually download GIS polygon data for ground truth, available as shapefiles at [the Urban Atlas website](http://www.eea.europa.eu/data-and-maps/data/urban-atlas). Unfortunately there is no way to automate this because of the confirmation web forms used on the Urban Atlas website. The vector data integration and sampling pipeline is detailed in a [notebook](./dataset-collection/Urban&nbspAtlas-process&nbspshapefiles&nbspto&nbspcompute&nbspstats&nbspand&nbspextract&nbspsampling&nbsplocations.ipynb).
+The entire pipeline is implemented and documented in this [notebook](./dataset-collection/Pipeline-to-create-Urban-Environments-dataset.ipynb).
 
-You can save these shapefiles (along with their respective projection files) to `/home/data/urban-atlas/shapefiles/`, or to a folder of your choosing, and manually edit the paths in the [notebook](./dataset-collection/Urban&nbspAtlas-process&nbspshapefiles&nbspto&nbspcompute&nbspstats&nbspand&nbspextract&nbspsampling&nbsplocations.ipynb).
+#### Obtaining shape files for ground truth labels
+First, manually download GIS polygon data for ground truth, available as shapefiles at [the Urban Atlas website](http://www.eea.europa.eu/data-and-maps/data/urban-atlas). Unfortunately there is no way to automate this because of the confirmation web forms used on the Urban Atlas website. 
+
+You can save these shapefiles (along with their respective projection files) to `/home/data/urban-atlas/shapefiles/`, or to a folder of your choosing, and manually edit the paths in the notebook.
 
 The paper uses the shapefiles for several cities, some of which are expected to be more "similar" to each other than others. We have experimented with data for several other cities, however we decided to only include the following six cities in the analysis in the paper:
 * Athens
